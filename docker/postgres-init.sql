@@ -1,6 +1,7 @@
--- PostgreSQL initialization script
--- Tables will be added in Step 5
--- This file ensures the volume mount doesn't fail
+-- Enterprise Integration Demo - PostgreSQL Schema
+-- Focus: Idempotency, Audit Trail, and Integration Metrics
+-- Author: https://github.com/xdth
+-- Date: 2025-11-01
 
 -- Temporary test table to verify initialization
 CREATE TABLE IF NOT EXISTS health_check (
@@ -11,3 +12,9 @@ CREATE TABLE IF NOT EXISTS health_check (
 
 -- Insert test record
 INSERT INTO health_check (status) VALUES ('initialized');
+
+-- Create metabase database for Metabase metadata
+CREATE DATABASE metabase;
+
+-- Switch to integration database (this is default from docker-compose)
+\c integration_db;

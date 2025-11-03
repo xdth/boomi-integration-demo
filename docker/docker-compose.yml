@@ -109,6 +109,35 @@ services:
     networks:
       - integration-network
 
+  # Metabase - Business Intelligence Dashboard
+  metabase:
+    image: metabase/metabase:latest
+    container_name: integration-metabase
+    environment:
+      MB_DB_TYPE: postgres
+      MB_DB_DBNAME: ${METABASE_DB_NAME:-metabase}
+      MB_DB_PORT: 5432
+      MB_DB_USER: ${POSTGRES_USER:-integration_user}
+      MB_DB_PASS: ${POSTGRES_PASSWORD:-integration_pass}
+      MB_DB_HOST: postgres
+      JAVA_OPTS: "-Xmx1g"
+    ports:
+      - "${METABASE_PORT:-3000}:3000"
+    networks:
+      - integration-network
+    depends_on:
+      postgres:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:3000/api/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 120s
+    restart: unless-stopped
+    volumes:
+      - metabase_data:/metabase.db
+
 volumes:
   postgres_data:
     driver: local
@@ -120,9 +149,10 @@ volumes:
     driver: local
   invoice_ninja_db:
     driver: local
+  metabase_data:
+    driver: local
 
 networks:
   integration-network:
     driver: bridge
     name: integration-net
-    
