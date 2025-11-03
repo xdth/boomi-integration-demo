@@ -2,8 +2,6 @@
 """
 Mock Infor ION Simulator
 Simulates sending BOD (Business Object Documents) to Boomi for processing
-Author: https://github.com/xdth
-Date: 2025-11-02
 """
 
 import os
@@ -62,38 +60,39 @@ def send_order(xml_content, order_id=None):
         'X-Source': 'Mock-ION'
     }
     
+    result = ""
     try:
-        print(f"\n{Fore.CYAN}📡 Sending to: {BOOMI_URL}{Fore.RESET}")
+        result += f"{Fore.CYAN}📡 Sending to: {BOOMI_URL}{Fore.RESET}\n"
         response = requests.post(BOOMI_URL, data=xml_content, headers=headers, timeout=5)
         
         if response.status_code == 200:
-            print(f"{Fore.GREEN}✅ Success: Order sent successfully{Fore.RESET}")
+            result += f"{Fore.GREEN}✅ Success: Order sent successfully{Fore.RESET}"
             stats['sent'] += 1
-            return True
+            return True, result
         elif response.status_code == 409:
-            print(f"{Fore.YELLOW}⚠️  Duplicate: Order already exists{Fore.RESET}")
+            result += f"{Fore.YELLOW}⚠️  Duplicate: Order already exists{Fore.RESET}"
             stats['duplicates'] += 1
-            return False
+            return False, result
         else:
-            print(f"{Fore.RED}❌ Error: HTTP {response.status_code}{Fore.RESET}")
+            result += f"{Fore.RED}❌ Error: HTTP {response.status_code}{Fore.RESET}"
             stats['errors'] += 1
-            return False
+            return False, result
             
     except requests.exceptions.ConnectionError:
-        print(f"{Fore.RED}❌ Error: Cannot connect to Boomi at {BOOMI_URL}{Fore.RESET}")
-        print(f"{Fore.YELLOW}   Make sure Boomi is running{Fore.RESET}")
+        result += f"{Fore.RED}❌ Error: Cannot connect to Boomi at {BOOMI_URL}{Fore.RESET}\n"
+        result += f"{Fore.YELLOW}   Make sure Boomi is running{Fore.RESET}"
         stats['errors'] += 1
-        return False
+        return False, result
     except Exception as e:
-        print(f"{Fore.RED}❌ Error: {str(e)}{Fore.RESET}")
+        result += f"{Fore.RED}❌ Error: {str(e)}{Fore.RESET}"
         stats['errors'] += 1
-        return False
+        return False, result
 
 def send_normal_order():
     """Send a valid sales order"""
     template = load_template('sales_order.xml')
     if not template:
-        return
+        return f"{Fore.RED}❌ Template not found{Fore.RESET}"
     
     order_id = generate_order_id()
     stats['last_order_id'] = order_id
@@ -103,19 +102,18 @@ def send_normal_order():
     xml = xml.replace('${TIMESTAMP}', datetime.now().isoformat())
     xml = xml.replace('${CUSTOMER_ID}', f"CUST-{os.urandom(2).hex()}")
     
-    print(f"\n{Fore.CYAN}📋 Order ID: {order_id}{Fore.RESET}")
-    send_order(xml)
+    result = f"{Fore.CYAN}📋 Order ID: {order_id}{Fore.RESET}\n"
+    success, send_result = send_order(xml)
+    return result + send_result
 
 def send_duplicate_order():
     """Send a duplicate of the last order"""
     if not stats['last_order_id']:
-        print(f"\n{Fore.YELLOW}⚠️  No previous order to duplicate{Fore.RESET}")
-        print(f"   Send a normal order first")
-        return
+        return f"{Fore.YELLOW}⚠️  No previous order to duplicate\n   Send a normal order first{Fore.RESET}"
     
     template = load_template('sales_order.xml')
     if not template:
-        return
+        return f"{Fore.RED}❌ Template not found{Fore.RESET}"
     
     # Use the same order ID as last time
     order_id = stats['last_order_id']
@@ -123,21 +121,23 @@ def send_duplicate_order():
     xml = xml.replace('${TIMESTAMP}', datetime.now().isoformat())
     xml = xml.replace('${CUSTOMER_ID}', f"CUST-{os.urandom(2).hex()}")
     
-    print(f"\n{Fore.YELLOW}🔁 Resending Order ID: {order_id}{Fore.RESET}")
-    send_order(xml)
+    result = f"{Fore.YELLOW}🔁 Resending Order ID: {order_id}{Fore.RESET}\n"
+    success, send_result = send_order(xml)
+    return result + send_result
 
 def send_malformed_order():
     """Send a malformed XML order"""
     template = load_template('malformed.xml')
     if not template:
-        return
+        return f"{Fore.RED}❌ Template not found{Fore.RESET}"
     
     order_id = generate_order_id()
     xml = template.replace('${ORDER_ID}', order_id)
     xml = xml.replace('${TIMESTAMP}', datetime.now().isoformat())
     
-    print(f"\n{Fore.RED}⚠️  Sending malformed order{Fore.RESET}")
-    send_order(xml)
+    result = f"{Fore.RED}⚠️  Sending malformed order{Fore.RESET}\n"
+    success, send_result = send_order(xml)
+    return result + send_result
 
 def send_bulk_orders():
     """Send 5 valid orders rapidly"""
@@ -185,6 +185,10 @@ def auto_mode():
     except KeyboardInterrupt:
         print(f"\n{Fore.YELLOW}Auto-mode stopped{Fore.RESET}")
 
+def clear_screen():
+    """Clear the terminal screen"""
+    os.system('clear' if os.name == 'posix' else 'cls')
+
 def show_statistics():
     """Display current statistics"""
     print(f"\n{Fore.CYAN}📊 Statistics:{Fore.RESET}")
@@ -194,14 +198,31 @@ def show_statistics():
     if stats['last_order_id']:
         print(f"   Last Order ID: {stats['last_order_id']}")
 
+def show_message(message, pause=True):
+    """Show a message and optionally pause"""
+    print(message)
+    if pause:
+        input(f"\n{Fore.CYAN}Press Enter to continue...{Fore.RESET}")
+
 def main_menu():
     """Display and handle the main menu"""
+    message = None
+    
     while True:
+        clear_screen()
         print(f"\n{Fore.CYAN}{'='*50}{Fore.RESET}")
         print(f"{Fore.CYAN}     Mock Infor ION Simulator{Fore.RESET}")
         print(f"{Fore.CYAN}{'='*50}{Fore.RESET}")
         print(f"Boomi Endpoint: {BOOMI_URL}")
         show_statistics()
+        
+        # Show any messages from previous action
+        if message:
+            print(f"\n{Fore.YELLOW}{'─'*50}{Fore.RESET}")
+            print(message)
+            print(f"{Fore.YELLOW}{'─'*50}{Fore.RESET}")
+            message = None
+        
         print(f"\n{Fore.CYAN}Options:{Fore.RESET}")
         print("1. Send Normal Order (valid BOD, new order ID)")
         print("2. Send Duplicate Order (reuse last order ID)")
@@ -213,20 +234,24 @@ def main_menu():
         choice = input(f"\n{Fore.CYAN}Choose option: {Fore.RESET}")
         
         if choice == '1':
-            send_normal_order()
+            message = send_normal_order()
         elif choice == '2':
-            send_duplicate_order()
+            message = send_duplicate_order()
         elif choice == '3':
-            send_malformed_order()
+            message = send_malformed_order()
         elif choice == '4':
             send_bulk_orders()
+            input(f"\n{Fore.CYAN}Press Enter to continue...{Fore.RESET}")
+            message = None
         elif choice == '5':
             auto_mode()
+            message = None
         elif choice == '6':
+            clear_screen()
             print(f"\n{Fore.GREEN}Goodbye!{Fore.RESET}")
             sys.exit(0)
         else:
-            print(f"{Fore.RED}Invalid option{Fore.RESET}")
+            message = f"{Fore.RED}Invalid option{Fore.RESET}"
 
 if __name__ == '__main__':
     try:
@@ -234,3 +259,4 @@ if __name__ == '__main__':
     except KeyboardInterrupt:
         print(f"\n\n{Fore.YELLOW}Interrupted by user{Fore.RESET}")
         sys.exit(0)
+        
