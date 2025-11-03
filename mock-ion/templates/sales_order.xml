@@ -1,0 +1,78 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<SyncSalesOrder xmlns="http://www.openapplications.org/oagis/10">
+  <ApplicationArea>
+    <Sender>
+      <LogicalID>INFOR_ION</LogicalID>
+      <ComponentID>ERP</ComponentID>
+    </Sender>
+    <CreationDateTime>${TIMESTAMP}</CreationDateTime>
+    <BODID>${ORDER_ID}</BODID>
+  </ApplicationArea>
+  <DataArea>
+    <Sync>
+      <ActionCriteria>
+        <ActionExpression actionCode="Add"/>
+      </ActionCriteria>
+    </Sync>
+    <SalesOrder>
+      <SalesOrderHeader>
+        <DocumentID>
+          <ID>${ORDER_ID}</ID>
+        </DocumentID>
+        <DocumentDateTime>${TIMESTAMP}</DocumentDateTime>
+        <Status>
+          <Code>OPEN</Code>
+          <Description>Open Order</Description>
+        </Status>
+        <CustomerParty>
+          <PartyIDs>
+            <ID>${CUSTOMER_ID}</ID>
+          </PartyIDs>
+          <Name>European Manufacturing Corp</Name>
+          <Location>
+            <Address>
+              <AddressLine>123 Industrial Avenue</AddressLine>
+              <CityName>Munich</CityName>
+              <CountryCode>DE</CountryCode>
+              <PostalCode>80331</PostalCode>
+            </Address>
+          </Location>
+        </CustomerParty>
+        <SalesOrganizationIDs>
+          <ID>EU-SALES</ID>
+        </SalesOrganizationIDs>
+        <OrderedAmount currencyID="EUR">5250.00</OrderedAmount>
+        <TaxAmount currencyID="EUR">997.50</TaxAmount>
+        <TotalAmount currencyID="EUR">6247.50</TotalAmount>
+      </SalesOrderHeader>
+      <SalesOrderLine>
+        <LineNumber>1</LineNumber>
+        <Item>
+          <ItemID>
+            <ID>WIDGET-001</ID>
+          </ItemID>
+          <Description>Industrial Widget Type A</Description>
+        </Item>
+        <OrderQuantity unitCode="EA">100</OrderQuantity>
+        <UnitPrice>
+          <Amount currencyID="EUR">25.00</Amount>
+        </UnitPrice>
+        <ExtendedAmount currencyID="EUR">2500.00</ExtendedAmount>
+      </SalesOrderLine>
+      <SalesOrderLine>
+        <LineNumber>2</LineNumber>
+        <Item>
+          <ItemID>
+            <ID>GADGET-002</ID>
+          </ItemID>
+          <Description>Premium Gadget Model B</Description>
+        </Item>
+        <OrderQuantity unitCode="EA">50</OrderQuantity>
+        <UnitPrice>
+          <Amount currencyID="EUR">55.00</Amount>
+        </UnitPrice>
+        <ExtendedAmount currencyID="EUR">2750.00</ExtendedAmount>
+      </SalesOrderLine>
+    </SalesOrder>
+  </DataArea>
+</SyncSalesOrder>

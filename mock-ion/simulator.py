@@ -2,6 +2,8 @@
 """
 Mock Infor ION Simulator
 Simulates sending BOD (Business Object Documents) to Boomi for processing
+Author: https://github.com/xdth
+Date: 2025-11-02
 """
 
 import os
@@ -141,11 +143,14 @@ def send_malformed_order():
 
 def send_bulk_orders():
     """Send 5 valid orders rapidly"""
+    clear_screen()
     print(f"\n{Fore.MAGENTA}🚀 Sending 5 orders rapidly...{Fore.RESET}")
     template = load_template('sales_order.xml')
     if not template:
-        return
+        input(f"\n{Fore.CYAN}Press Enter to continue...{Fore.RESET}")
+        return f"{Fore.RED}❌ Bulk send failed - template not found{Fore.RESET}"
     
+    results = []
     for i in range(5):
         order_id = f"BULK-{generate_order_id()}"
         stats['last_order_id'] = order_id
@@ -155,17 +160,23 @@ def send_bulk_orders():
         xml = xml.replace('${CUSTOMER_ID}', f"CUST-{os.urandom(2).hex()}")
         
         print(f"\n{Fore.CYAN}[{i+1}/5] Order ID: {order_id}{Fore.RESET}")
-        send_order(xml)
+        success, result = send_order(xml)
+        print(result)
         time.sleep(0.5)  # Small delay between sends
+    
+    input(f"\n{Fore.CYAN}Press Enter to continue...{Fore.RESET}")
+    return f"{Fore.GREEN}✅ Bulk send completed - check statistics{Fore.RESET}"
 
 def auto_mode():
     """Send one order every 30 seconds"""
+    clear_screen()
     print(f"\n{Fore.MAGENTA}🤖 Auto-mode: Sending 1 order every 30 seconds{Fore.RESET}")
     print(f"   Press Ctrl+C to stop")
     
     template = load_template('sales_order.xml')
     if not template:
-        return
+        input(f"\n{Fore.CYAN}Press Enter to continue...{Fore.RESET}")
+        return f"{Fore.RED}❌ Auto-mode failed - template not found{Fore.RESET}"
     
     try:
         while True:
@@ -177,13 +188,16 @@ def auto_mode():
             xml = xml.replace('${CUSTOMER_ID}', f"CUST-{os.urandom(2).hex()}")
             
             print(f"\n{Fore.CYAN}[AUTO] Order ID: {order_id}{Fore.RESET}")
-            send_order(xml)
+            success, result = send_order(xml)
+            print(result)
             
             print(f"{Fore.YELLOW}   Next order in 30 seconds...{Fore.RESET}")
             time.sleep(30)
             
     except KeyboardInterrupt:
         print(f"\n{Fore.YELLOW}Auto-mode stopped{Fore.RESET}")
+        input(f"\n{Fore.CYAN}Press Enter to continue...{Fore.RESET}")
+        return f"{Fore.YELLOW}Auto-mode stopped by user{Fore.RESET}"
 
 def clear_screen():
     """Clear the terminal screen"""
@@ -240,12 +254,9 @@ def main_menu():
         elif choice == '3':
             message = send_malformed_order()
         elif choice == '4':
-            send_bulk_orders()
-            input(f"\n{Fore.CYAN}Press Enter to continue...{Fore.RESET}")
-            message = None
+            message = send_bulk_orders()
         elif choice == '5':
-            auto_mode()
-            message = None
+            message = auto_mode()
         elif choice == '6':
             clear_screen()
             print(f"\n{Fore.GREEN}Goodbye!{Fore.RESET}")
@@ -259,4 +270,3 @@ if __name__ == '__main__':
     except KeyboardInterrupt:
         print(f"\n\n{Fore.YELLOW}Interrupted by user{Fore.RESET}")
         sys.exit(0)
-        
